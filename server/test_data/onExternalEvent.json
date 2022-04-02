@@ -1,0 +1,17 @@
+{
+  "account_id": "12345",
+  "event": "onExternalEvent",
+  "timestamp": 1496400354326,
+  "region": "US",
+  "domain": "example.freshservice.com",
+  "data": {
+    "id": "PRB-28",
+    "custom_fields": {
+      "initiated_from_fresh_service": "true",
+      "initiated_from_service_now": ""
+    }
+  },
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

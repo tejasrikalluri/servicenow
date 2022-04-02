@@ -1,0 +1,40 @@
+{
+  "platform-version": "2.2",
+  "product": {
+    "freshservice": {
+      "location": {
+        "ticket_background": {
+          "url": "template.html"
+        }
+      },
+      "events": {
+        "onTicketCreate": {
+          "handler": "onTicketCreateHandler"
+        },
+        "onExternalEvent": {
+          "handler": "onExternalEventHandler"
+        },
+        "onConversationCreate": {
+          "handler": "onConversationCreateCallback"
+        },
+        "onTicketUpdate": {
+          "handler": "onTicketUpdateCallback"
+        },
+        "onAppInstall": {
+          "handler": "onAppInstallHandler"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "base-64": "0.1.0"
+  },
+  "engines": {
+    "node": "12.22.6",
+    "fdk": "7.5.0"
+  },
+  "whitelisted-domains": [
+    "https://*.freshservice.com",
+    "https://*.service-now.com"
+  ]
+}

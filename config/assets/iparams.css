@@ -1,0 +1,26 @@
+.trouble {
+    margin-left: 47%;
+    padding-right: 5px;
+}
+
+fw-input {
+    width: 60% !important;
+}
+
+.error_div {
+    color: red;
+    margin-bottom: 3px !important;
+}
+
+#authBtn {
+    margin-top: 3px;
+}
+
+.red {
+    color: red;
+}
+
+.align {
+    margin-left: 5px;
+    margin-top: 12px;
+}

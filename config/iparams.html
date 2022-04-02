@@ -1,0 +1,90 @@
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="https://static.freshdev.io/fdk/2.0/assets/fresh_client.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script type="module" src="https://unpkg.com/@freshworks/crayons/dist/crayons/crayons.esm.js">
+    </script>
+    <script nomodule src="https://unpkg.com/@freshworks/crayons/dist/crayons/crayons.js">
+    </script>
+    <script src="./assets/iparams.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://static.freshdev.io/fdk/2.0/assets/freshservice.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/iparams.css">
+
+</head>
+
+<body>
+    <div class="authentication align">
+        <div class="domain">
+            <fw-input label="Freshservice Domain" id="domain" required clear-input>
+        </div>
+        <div class="apiKey">
+            <fw-input label="Freshservice API Key" id="apiKey" type="password" required clear-input>
+        </div>
+        <span class="trouble"> <a
+                href="https://support.freshservice.com/support/solutions/articles/50000000306-where-do-i-find-my-api-key-"
+                target="_blank">Trouble
+                finding
+                API
+                key?</a></span>
+        <div class="error_div"></div>
+        <div class="authenticate">
+            <fw-button color="Primary" id="authBtn">Authenticate</fw-button>
+        </div>
+    </div>
+    <div class="sn_authentication align">
+        <div class="domain">
+            <fw-input label="Servicenow Username" id="domain_sn" required clear-input>
+        </div>
+        <div class="apiKey">
+            <fw-input label="Servicenow API Key" id="apiKeysn" type="password" required clear-input>
+        </div>
+        <div class="error_div_sn red"></div>
+        <div class="authenticate_sn">
+            <fw-button color="Primary" id="authBtn_sn">Authenticate</fw-button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function postConfigs() {
+            var domain = $("#domain").val();
+            var api_key = $("#apiKey").val();
+            var domain_sn = $("#domain_sn").val();
+            var apiKeySn = $("#apiKeysn").val();
+            return {
+                __meta: {
+                    secure: ["api_key,apiKeySn"]
+                },
+                domain: domain,
+                api_key: api_key, domain_sn: domain_sn, apiKeySn: apiKeySn
+            };
+        }
+        function getConfigs(configs) {
+            $("#domain").val(configs.domain);
+            $("#apiKey").val(configs.api_key);
+            $("#domain_sn").val(configs.domain_sn);
+            $("#apiKeysn").val(configs.apiKeySn);
+        }
+        function validate() {
+            let isValid = true;
+            var btnText = $("#authBtn").text();
+            var authBtn_sn = $("#authBtn_sn").text();
+
+            if ($(".authentication").is(":visible") && btnText === "Authenticate") {
+                $(".error_div").html("Please click Authenticate button for further installation").fadeOut(5000);
+                isValid = false;
+            }
+            else if ($(".sn_authentication").is(":visible") && authBtn_sn === "Authenticate") {
+                $(".error_div_sn").html("Please click Authenticate button for further installation").fadeOut(5000);
+                isValid = false;
+            }
+            else
+                isValid = true;
+            return isValid;
+        }
+    </script>
+</body>
+
+</html>

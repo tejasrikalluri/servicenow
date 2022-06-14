@@ -67,41 +67,6 @@ exports = {
     }
 
   },
-  onTicketUpdateCallback: function (args) {
-    console.log("Update event hitted")
-    var changes = args.data.ticket.changes;
-    let ticket_id = args.data.ticket.id;
-    console.log("Changes of custom field")
-    console.log(changes)
-    console.log("ticket id")
-    console.log(ticket_id)
-    console.log("ticket type")
-    console.log(args.data.ticket.type_name)
-    const subject = args.data.ticket.subject;
-    const description = args.data.ticket.description;
-    const priority = args.data.ticket.priority;
-    const status = args.data.ticket.status;
-
-    if ("custom_fields" in changes && args.data.ticket.type_name === "Service Request") {
-      var objBody = {
-        "u_short_description": subject, "u_ticket_type": args.data.ticket.type_name,
-        "u_description": description
-      };
-      console.log("----------------- custom fields started loop in update event------------")
-      for (var i = 0; i < changes.custom_fields.length; i++) {
-        console.log(changes.custom_fields[i]);
-        console.log(changes.custom_fields[i].name)
-        if (changes.custom_fields[i].name === "Initiated from FRESH SERVICE") {
-          console.log(changes.custom_fields[i].value)
-          console.log(typeof (changes.custom_fields[i].value))
-          if (changes.custom_fields[i].value[1] === 'true') {
-            checkTicketInDB(ticket_id, objBody, args, priority, status);
-          }
-        }
-      }
-      console.log("----------------- custom fields ended loop in update event------------")
-    }
-  },
   onConversationCreateCallback: function (payload) {
     console.log("conversation event hitted")
     var conv = payload.data.conversation;

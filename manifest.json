@@ -17,9 +17,6 @@
         "onConversationCreate": {
           "handler": "onConversationCreateCallback"
         },
-        "onTicketUpdate": {
-          "handler": "onTicketUpdateCallback"
-        },
         "onAppInstall": {
           "handler": "onAppInstallHandler"
         }

@@ -30,8 +30,8 @@
     "base-64": "0.1.0"
   },
   "engines": {
-    "node": "12.22.6",
-    "fdk": "7.5.0"
+    "node": "14.17.3",
+    "fdk": "8.3.3"
   },
   "whitelisted-domains": [
     "https://*.freshservice.com",

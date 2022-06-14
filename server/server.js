@@ -3,23 +3,26 @@ exports = {
   onTicketCreateHandler: function (args) {
     console.log("ticket created event hitted")
     console.log("___________________ custom fields of ticket------------------------")
-    for (var i = 0; i < args.data.ticket.custom_fields.length; i++) {
-      console.log(args.data.ticket.custom_fields[i].name, args.data.ticket.custom_fields[i].value)
-      if (args.data.ticket.custom_fields[i].name === "daisy_service_now_integration" && args.data.ticket.custom_fields[i].value) {
-        const ticket_id = args.data.ticket.id;
-        const subject = args.data.ticket.subject;
-        const description = args.data.ticket.description;
-        const priority = args.data.ticket.priority;
-        const status = args.data.ticket.status;
-        var objBody = {
-          "u_short_description": subject, "u_ticket_type": args.data.ticket.type_name,
-          "u_description": description
-        };
-        formRemainingBody(objBody, args, ticket_id, priority, status);
+    if (args.data.ticket.type_name === "Service Request")
+      getServiceItemId(args);
+    else {
+      for (var i = 0; i < args.data.ticket.custom_fields.length; i++) {
+        console.log(args.data.ticket.custom_fields[i].name, args.data.ticket.custom_fields[i].value)
+        if (args.data.ticket.custom_fields[i].name === "daisy_service_now_integration" && args.data.ticket.custom_fields[i].value) {
+          const ticket_id = args.data.ticket.id;
+          const subject = args.data.ticket.subject;
+          const description = args.data.ticket.description;
+          const priority = args.data.ticket.priority;
+          const status = args.data.ticket.status;
+          var objBody = {
+            "u_short_description": subject, "u_ticket_type": args.data.ticket.type_name,
+            "u_description": description
+          };
+          formRemainingBody(objBody, args, ticket_id, priority, status);
+        }
       }
     }
     console.log("___________________ custom fields ended------------------------")
-
   },
   onAppInstallHandler: function () {
     console.log("on app istall call...............................");
@@ -61,18 +64,6 @@ exports = {
         if (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == 'true')
           getProblemNotes(payload.data, id_num, payload);
       }
-      else {
-        // $db.get(id_num).then(function (data) {
-        //   console.log(data)
-        //   let sys_id = data.id;
-        //   console.log(object)
-        //   // updateTicket(sys_id, payload, object);
-        // }, function (error) {
-        //   console.error(error.message);
-        // });
-      }
-
-
     }
 
   },
@@ -110,25 +101,6 @@ exports = {
       }
       console.log("----------------- custom fields ended loop in update event------------")
     }
-    // var body = {};
-    // if ("priority" in changes) {
-    //   body.u_priority = changes.priority_name[u 1];
-    // }
-    // if ("status" in changes) {
-    //   body.u_state = changes.status_name[1];
-    // }
-    // for (var i = 0; i < args.data.ticket.custom_fields.length; i++) {
-    //   if (args.data.ticket.custom_fields[i].name === "daisy_service_now_integration" || args.data.ticket.custom_fields[i].name === "initiated_from_service_now") {
-    //     if (args.data.ticket.custom_fields[i].value) {
-    //       $db.get(ticket_id).then(function (data) {
-    //         let sys_id = data.id;
-    //         updateTicket(sys_id, args, body);
-    //       }, function (error) {
-    //         console.error(error.message);
-    //       });
-    //     }
-    //   }
-    // }
   },
   onConversationCreateCallback: function (payload) {
     console.log("conversation event hitted")
@@ -160,6 +132,58 @@ var map_fields = function (callback) {
     console.error(error);
   });
 }
+const getServiceItemId = function (args) {
+  var headers = { "Authorization": "Basic <%= encode(iparam.api_key) %>" };
+  var options = { headers: headers };
+  var url = `https://<%= iparam.domain %>/api/v2/tickets/${args.data.ticket.id}/requested_items`;
+  $request.get(url, options).then(function (data) {
+    try {
+      var resp = JSON.parse(data.response);
+      console.log("SERVICE ITEM ID")
+      console.log(resp.requested_items[0].service_item_id)
+      if (resp.requested_items[0].service_item_id === 122 || resp.requested_items[0].service_item_id === 120) updateTicketFieldFS(args);
+    } catch (error) {
+      console.error(error);
+    }
+  }, function (error) {
+    console.error(error);
+  });
+};
+const updateTicketFieldFS = function (args) {
+  var url = `https://<%= iparam.domain %>/api/v2/tickets/${args.data.ticket.id}`;
+  console.log(url)
+  const apiKey = '<%= encode(iparam.api_key) %>';
+  let headers = {
+    "Authorization": `Basic ${apiKey}`,
+    "Content-Type": "application/json"
+  };
+  var objBody = {
+    "custom_fields": {
+      "daisy_service_now_integration": true
+    }
+  };
+  let body = JSON.stringify(objBody);
+  console.log("REQUEST BODY")
+  console.log(body)
+  let options = {
+    headers: headers,
+    body: body
+  }
+  $request.put(url, options).then(function () {
+    console.log("FIELD UPDATED IN FRESHSERVICE")
+    const subject = args.data.ticket.subject;
+    const description = args.data.ticket.description;
+    const priority = args.data.ticket.priority;
+    const status = args.data.ticket.status;
+    var objBody = {
+      "u_short_description": subject, "u_ticket_type": args.data.ticket.type_name,
+      "u_description": description
+    };
+    checkTicketInDB(args.data.ticket.id, objBody, args, priority, status);
+  }, function (error) {
+    console.error(error);
+  });
+};
 function getProblemNotes(w_data, id, args) {
   console.log(" in 134");
   let url = "https://<%= iparam.domain %>/api/v2/problems/" + id + "/notes";
@@ -188,23 +212,6 @@ function getProblemNotes(w_data, id, args) {
       if (sub_string === -1) {
         createNoteInSn(res.notes[0].body, w_data, args);
       }
-
-
-
-      // console.log(res.ticket);
-      // console.log(res.ticket.type);
-      // console.log(res.ticket.custom_fields)
-      // for (const property in res.ticket.custom_fields) {
-      //   console.log(property);
-      //   if (property === "daisy_service_now_integration" || property === "initiated_from_service_now") {
-      //     console.info(property, res.ticket.custom_fields[property]);
-      //     if (res.ticket.custom_fields[property] === true) {
-      //       createCommentsInSn(conv, args, res.ticket.type);
-      //       // checkTicketId(conv, args, res.ticket.type);
-      //     }
-      //   }
-      // }
-
     } catch (error) {
       console.error(error);
     }
@@ -213,7 +220,8 @@ function getProblemNotes(w_data, id, args) {
   });
 }
 function createNoteInSn(text, w_data, args) {
-  let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
+  // let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
+  let url = "https://alternativestaging.service-now.com/api/now/table/u_freshservice_ticket";
   console.log(url)
   const apiKey = base64.encode(`${args.iparams.domain_sn}:${args.iparams.apiKeySn}`);
   let headers = {
@@ -244,7 +252,6 @@ function checkTicketInDB(ticket_id, objBody, args, priority, status) {
       console.error(e.message);
     else {
       formRemainingBody(objBody, args, ticket_id, priority, status)
-      // createTicketInServicenow(objBody, ticket_id, type, args);
     }
   });
 }
@@ -308,7 +315,6 @@ function getTicketDetails(conv, args, incoming) {
           console.info(property, res.ticket.custom_fields[property]);
           if (res.ticket.custom_fields[property] === true && !incoming) {
             createCommentsInSn(conv, args, res.ticket.type, incoming);
-            // checkTicketId(conv, args, res.ticket.type);
           } else if (res.ticket.custom_fields[property] === true && incoming) {
             createCommentsInSn(res.ticket.conversations[0], args, res.ticket.type, incoming);
           }
@@ -323,7 +329,8 @@ function getTicketDetails(conv, args, incoming) {
   });
 }
 function createCommentsInSn(conv, args, type, incoming) {
-  let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
+  // let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
+  let url = "https://alternativestaging.service-now.com/api/now/table/u_freshservice_ticket";
   console.log(url)
   const apiKey = base64.encode(`${args.iparams.domain_sn}:${args.iparams.apiKeySn}`);
   let headers = {
@@ -334,7 +341,7 @@ function createCommentsInSn(conv, args, type, incoming) {
     "u_internal_comments": conv.body
   }; if (!incoming)
     objBody.u_correlation_id = (type === "Incident") ? "INC-" + conv.ticket_id : "SR-" + conv.ticket_id;
-    else 
+  else
     objBody.u_correlation_id = (type === "Incident") ? "INC-" + args.data.conversation.ticket_id : "SR-" + args.data.conversation.ticket_id;
   let body = JSON.stringify(objBody);
   console.log("body")
@@ -349,29 +356,10 @@ function createCommentsInSn(conv, args, type, incoming) {
     console.error(error);
   });
 }
-// function updateTicket(sys_id, args, bodyForm) {
-//   let url = ` https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket/${sys_id}`;
-//   console.log(url);
-//   const apiKey = base64.encode(`${args.iparams.domain_sn}:${args.iparams.apiKeySn}`);
-//   let headers = {
-//     "Authorization": `Basic ${apiKey}`,
-//     "Content-Type": "application/json"
-//   };
-
-//   let options = {
-//     headers: headers,
-//     body: JSON.stringify(bodyForm)
-//   };
-
-//   $request.put(url, options).then(function (data) {
-//     console.log("updated in sn");
-//     console.log(data);
-//   }, function (error) {
-//     console.error(error);
-//   });
-// }
 function createTicketInServicenow(objBody, ticket_id, type, args) {
-  let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
+  // let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
+  let url = "https://alternativestaging.service-now.com/api/now/table/u_freshservice_ticket";
+
   console.log(url)
   const apiKey = base64.encode(`${args.iparams.domain_sn}:${args.iparams.apiKeySn}`);
   let headers = {
@@ -385,7 +373,6 @@ function createTicketInServicenow(objBody, ticket_id, type, args) {
   }
   $request.post(url, options).then(function (data) {
     console.log("created ticket in sn")
-    console.log(data)
     let res = JSON.parse(data.response);
     let sys_id = res.result.sys_id;
     let num = res.result.u_daisy_ticket_number;

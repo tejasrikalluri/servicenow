@@ -124,8 +124,10 @@ const updateTicketFieldFS = function (args) {
   };
   var objBody = {
     "custom_fields": {
-      "daisy_service_now_integration": true
-    }
+      "daisy_service_now_integration": true,
+      "site": "17 Liverpool Gardens"
+    },
+    "description": args.data.ticket.description, "group_id": 26000208201
   };
   let body = JSON.stringify(objBody);
   console.log("REQUEST BODY")

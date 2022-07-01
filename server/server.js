@@ -116,7 +116,8 @@ exports = {
     if (conv.incoming === false && conv.private === true) {
       getTicketDetails(conv, payload, conv.incoming);
     }
-    else if (conv.incoming && conv.private && (conv.body.indexOf("Please re-apply manually") != -1 || conv.body.indexOf("Your request has been received and a ticket reference will be sent shortly") != -1)) {
+    // else if (conv.incoming && conv.private && (conv.body.indexOf("Please re-apply manually") != -1)) {
+    else if (conv.incoming && conv.private && conv.body.indexOf("Your request has been received and a ticket reference will be sent shortly.") != -1) {
       getTicketDetails(conv, payload, conv.incoming);
       console.log("else if success")
     }

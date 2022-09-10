@@ -90,7 +90,6 @@ exports = {
     const description = args.data.ticket.description;
     const priority = args.data.ticket.priority;
     const status = args.data.ticket.status;
-
     if ("custom_fields" in changes && args.data.ticket.type_name === "Service Request") {
       var objBody = {
         "u_short_description": subject, "u_ticket_type": args.data.ticket.type_name,
@@ -99,36 +98,14 @@ exports = {
       console.log("----------------- custom fields started loop in update event------------")
       for (var i = 0; i < changes.custom_fields.length; i++) {
         console.log(changes.custom_fields[i]);
-        console.log(changes.custom_fields[i].name)
+        console.log(changes.custom_fields[i].name, changes.custom_fields[i].value)
         if (changes.custom_fields[i].name === "Initiated from FRESH SERVICE") {
-          console.log(changes.custom_fields[i].value)
-          console.log(typeof (changes.custom_fields[i].value))
-          if (changes.custom_fields[i].value[1] === 'true') {
+          if (changes.custom_fields[i].value[1] === 'true')
             checkTicketInDB(ticket_id, objBody, args, priority, status);
-          }
         }
       }
       console.log("----------------- custom fields ended loop in update event------------")
     }
-    // var body = {};
-    // if ("priority" in changes) {
-    //   body.u_priority = changes.priority_name[u 1];
-    // }
-    // if ("status" in changes) {
-    //   body.u_state = changes.status_name[1];
-    // }
-    // for (var i = 0; i < args.data.ticket.custom_fields.length; i++) {
-    //   if (args.data.ticket.custom_fields[i].name === "daisy_service_now_integration" || args.data.ticket.custom_fields[i].name === "initiated_from_service_now") {
-    //     if (args.data.ticket.custom_fields[i].value) {
-    //       $db.get(ticket_id).then(function (data) {
-    //         let sys_id = data.id;
-    //         updateTicket(sys_id, args, body);
-    //       }, function (error) {
-    //         console.error(error.message);
-    //       });
-    //     }
-    //   }
-    // }
   },
   onConversationCreateCallback: function (payload) {
     console.log("conversation event hitted")
@@ -139,7 +116,8 @@ exports = {
     if (conv.incoming === false && conv.private === true) {
       getTicketDetails(conv, payload, conv.incoming);
     }
-    else if (conv.incoming && conv.private && conv.body.indexOf("Please re-apply manually") != -1) {
+    // else if (conv.incoming && conv.private && (conv.body.indexOf("Please re-apply manually") != -1)) {
+    else if (conv.incoming && conv.private && conv.body.indexOf("Your request has been received and a ticket reference will be sent shortly.") != -1) {
       getTicketDetails(conv, payload, conv.incoming);
       console.log("else if success")
     }
@@ -154,14 +132,16 @@ var map_fields = function (callback) {
       var resp = JSON.parse(data.response);
       callback(resp)
     } catch (error) {
+      console.log("AT MAP FIELDS CATCH BLOCK")
       console.error(error);
     }
   }, function (error) {
+    console.log("AT MAP FIELDS ERROR BLOCK")
     console.error(error);
   });
 }
 function getProblemNotes(w_data, id, args) {
-  console.log(" in 134");
+  console.log(" in 143");
   let url = "https://<%= iparam.domain %>/api/v2/problems/" + id + "/notes";
   console.log(url)
   const apiKey = '<%= encode(iparam.api_key) %>';
@@ -225,6 +205,7 @@ function createNoteInSn(text, w_data, args) {
   };
   objBody.u_correlation_id = w_data.id;
   let body = JSON.stringify(objBody);
+  console.log("REQUEST BODY")
   console.log(body)
   let options = {
     headers: headers,
@@ -240,11 +221,12 @@ function checkTicketInDB(ticket_id, objBody, args, priority, status) {
   $db.get(ticket_id).then(function () {
     console.info("Record already there for SR");
   }, function (e) {
-    if (e.status !== 404)
+    if (e.status !== 404) {
+      console.log("IN CHECK TICKET IN DB")
       console.error(e.message);
+    }
     else {
       formRemainingBody(objBody, args, ticket_id, priority, status)
-      // createTicketInServicenow(objBody, ticket_id, type, args);
     }
   });
 }
@@ -268,6 +250,7 @@ function formRemainingBody(objBody, args, ticket_id, priority, status) {
     }
     objBody["u_priority"] = priorityMap[priority];
     objBody["u_state"] = statusMap[status];
+    console.log("TYPE OF THE TICKET")
     console.log(args.data.ticket.type_name)
     if (args.data.ticket.type_name === "Incident") {
       objBody["u_correlation_id"] = "INC-" + ticket_id.toString();
@@ -275,6 +258,7 @@ function formRemainingBody(objBody, args, ticket_id, priority, status) {
     } else {
       objBody["u_correlation_id"] = "SR-" + ticket_id.toString();
     }
+    console.log("REQUEST BODY")
     console.log(objBody)
     createTicketInServicenow(objBody, ticket_id, args.data.ticket.type_name, args);
   });
@@ -308,7 +292,6 @@ function getTicketDetails(conv, args, incoming) {
           console.info(property, res.ticket.custom_fields[property]);
           if (res.ticket.custom_fields[property] === true && !incoming) {
             createCommentsInSn(conv, args, res.ticket.type, incoming);
-            // checkTicketId(conv, args, res.ticket.type);
           } else if (res.ticket.custom_fields[property] === true && incoming) {
             createCommentsInSn(res.ticket.conversations[0], args, res.ticket.type, incoming);
           }
@@ -316,9 +299,11 @@ function getTicketDetails(conv, args, incoming) {
       }
       console.log("--------------------ticket fields names loop ended------------------")
     } catch (error) {
+      console.log("IN getTicketDetails CATCH BLOCK")
       console.error(error);
     }
   }, function (error) {
+    console.log("IN getTicketDetails ERROR BLOCK")
     console.error(error);
   });
 }
@@ -334,10 +319,10 @@ function createCommentsInSn(conv, args, type, incoming) {
     "u_internal_comments": conv.body
   }; if (!incoming)
     objBody.u_correlation_id = (type === "Incident") ? "INC-" + conv.ticket_id : "SR-" + conv.ticket_id;
-    else 
+  else
     objBody.u_correlation_id = (type === "Incident") ? "INC-" + args.data.conversation.ticket_id : "SR-" + args.data.conversation.ticket_id;
   let body = JSON.stringify(objBody);
-  console.log("body")
+  console.log("REQUEST BODY")
   console.log(body)
   let options = {
     headers: headers,
@@ -349,27 +334,6 @@ function createCommentsInSn(conv, args, type, incoming) {
     console.error(error);
   });
 }
-// function updateTicket(sys_id, args, bodyForm) {
-//   let url = ` https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket/${sys_id}`;
-//   console.log(url);
-//   const apiKey = base64.encode(`${args.iparams.domain_sn}:${args.iparams.apiKeySn}`);
-//   let headers = {
-//     "Authorization": `Basic ${apiKey}`,
-//     "Content-Type": "application/json"
-//   };
-
-//   let options = {
-//     headers: headers,
-//     body: JSON.stringify(bodyForm)
-//   };
-
-//   $request.put(url, options).then(function (data) {
-//     console.log("updated in sn");
-//     console.log(data);
-//   }, function (error) {
-//     console.error(error);
-//   });
-// }
 function createTicketInServicenow(objBody, ticket_id, type, args) {
   let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
   console.log(url)
@@ -385,16 +349,17 @@ function createTicketInServicenow(objBody, ticket_id, type, args) {
   }
   $request.post(url, options).then(function (data) {
     console.log("created ticket in sn")
-    console.log(data)
     let res = JSON.parse(data.response);
+    console.log("RESPONSE RESULT")
+    console.log(res.result)
     let sys_id = res.result.sys_id;
     let num = res.result.u_daisy_ticket_number;
     console.log(sys_id, num);
-    if (type === "Incident" || type === "Problem")
-      updateTicketField(ticket_id, num, sys_id, type);
-    else
+    (type === "Incident" || type === "Problem") ?
+      updateTicketField(ticket_id, num, sys_id, type) :
       createPrivateNoteInFs(ticket_id, num, sys_id);
   }, function (error) {
+    console.log("IN createTicketInServicenow ERROR BLOCK")
     console.error(error);
   });
 }
@@ -415,9 +380,10 @@ function createPrivateNoteInFs(id, num, sys_id) {
     body: body
   }
   $request.post(url, options).then(function () {
-    console.log("created comments in fs")
+    console.log("created comment in fs")
     linkSnTicketToFs(sys_id, id, num);
   }, function (error) {
+    console.log("IN createPrivateNoteInFs ERROR BLOCK")
     console.error(error);
   });
 }
@@ -440,6 +406,7 @@ function updateTicketField(ticket_id, num, sys_id, type) {
     obj.custom_fields = {};
     obj.custom_fields["cf_3rd_party_reference"] = num;
   }
+  console.log("REQUEST BODY")
   console.log(obj);
   console.log(url);
   let body = JSON.stringify(obj);
@@ -450,6 +417,7 @@ function updateTicketField(ticket_id, num, sys_id, type) {
   $request.put(url, options).then(function () {
     linkSnTicketToFs(sys_id, ticket_id, num);
   }, function (error) {
+    console.log("IN updateTicketField ERROR BLOCK")
     console.error(error);
   });
 }

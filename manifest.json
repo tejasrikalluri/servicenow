@@ -2,23 +2,9 @@
   "platform-version": "2.2",
   "product": {
     "freshservice": {
-      "location": {
-        "ticket_background": {
-          "url": "template.html"
-        }
-      },
       "events": {
-        "onTicketCreate": {
-          "handler": "onTicketCreateHandler"
-        },
         "onExternalEvent": {
           "handler": "onExternalEventHandler"
-        },
-        "onConversationCreate": {
-          "handler": "onConversationCreateCallback"
-        },
-        "onTicketUpdate": {
-          "handler": "onTicketUpdateCallback"
         },
         "onAppInstall": {
           "handler": "onAppInstallHandler"

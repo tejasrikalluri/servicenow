@@ -13,26 +13,13 @@ exports = {
     });
   },
   onExternalEventHandler: function (payload) {
-    console.log("EXTERNAL EVEN HITTTED")
-    console.log("PAYLOAD DATA")
-    console.log(payload.data)
-    console.log('PAYLOAD DATA OBJECT LENGTH')
-    console.log(Object.keys(payload.data).length)
+    externalEventPayloadLogs(payload);
     var object = {
       "u_priority": payload.data.priority,
       "u_state": payload.data.status, "u_correlation_id": payload.data.id
     }
     var id_num = payload.data.id.split("-")[1];
-    console.log("PROBLEM ID")
-    console.log(id_num)
-    console.log("PRBLEM CUSTOM FIELDS")
-    console.log(payload.data.custom_fields)
-    console.log("subject" in payload.data, " <-subject exit")
-    console.log("subject" in payload.data === false, " <-not subject exist")
-    console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true', " <- initiated_from_fresh_service isTrue?")
-    console.log(payload.data.custom_fields.initiated_from_service_now == 'true', " <- initiated_from_service_now isTrue?")
-    console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true' && "subject" in payload.data, " <-first if condition")
-    console.log("subject" in payload.data === false && (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == true), " <-second if condition")
+    conditionChecksLogs(id_num, payload);
     if (payload.data.custom_fields.initiated_from_fresh_service == 'true' && "subject" in payload.data) {//create problem
       object.u_description = payload.data.description;
       object.u_short_description = payload.data.subject;
@@ -41,14 +28,51 @@ exports = {
       console.log(object)
       createTicketInServicenow(object, id_num, "Problem", payload);
     }
-    else if ("subject" in payload.data === false && (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == true)) {
-      if (Object.keys(payload.data).length === 2) {
-        if (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == 'true')
-          getProblemNotes(payload.data, id_num, payload);
-      }
-    }
+    else otherProblemsEvents(payload, id_num, object);
   }
 };
+let otherProblemsEvents = function (payload, id_num, object) {
+  if ("subject" in payload.data === false && (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == true)) { //note creation
+    if (Object.keys(payload.data).length === 2) {
+      if (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == 'true')
+        getProblemNotes(payload.data, id_num, payload);
+    }
+  } else if (Object.keys(payload.data.custom_fields).length === 1) { //problem updated
+    searchProblemInDb(payload, object);
+  }
+}
+
+let searchProblemInDb = function (payload, object) {
+  client.db.get(`problem:${data.id}`).then(function (data) {
+    console.log("PROBLEM ID IS IN DB")
+  }, function (error) {
+    if (e.status !== 404) {
+      createTicketInServicenow(object, data.id, "Problem", payload);
+    } else {
+      console.log('ERROR AT SEARCH PROBLEM IN DB()')
+      console.error(error)
+    }
+  });
+}
+function externalEventPayloadLogs(payload) {
+  console.log("EXTERNAL EVEN HITTTED")
+  console.log("PAYLOAD DATA")
+  console.log(payload.data)
+  console.log('PAYLOAD DATA OBJECT LENGTH')
+  console.log(Object.keys(payload.data).length)
+}
+function conditionChecksLogs(id_num, payload) {
+  console.log("PROBLEM ID")
+  console.log(id_num)
+  console.log("PRBLEM CUSTOM FIELDS")
+  console.log(payload.data.custom_fields)
+  console.log("subject" in payload.data, " <-subject exit")
+  console.log("subject" in payload.data === false, " <-not subject exist")
+  console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true', " <- initiated_from_fresh_service isTrue?")
+  console.log(payload.data.custom_fields.initiated_from_service_now == 'true', " <- initiated_from_service_now isTrue?")
+  console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true' && "subject" in payload.data, " <-first if condition")
+  console.log("subject" in payload.data === false && (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == true), " <-second if condition")
+}
 function getProblemNotes(w_data, id, args) {
   console.log(" in getProblemNotes()");
   let url = "https://<%= iparam.domain %>/api/v2/problems/" + id + "/notes";

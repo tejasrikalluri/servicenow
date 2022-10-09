@@ -32,14 +32,11 @@ exports = {
   }
 };
 let otherProblemsEvents = function (payload, id_num, object) {
-  if ("subject" in payload.data === false && (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == true)) { //note creation
-    if (Object.keys(payload.data).length === 2) {
-      if (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == 'true')
-        getProblemNotes(payload.data, id_num, payload);
-    }
-  } else if (Object.keys(payload.data.custom_fields).length === 1) { //problem updated
+  if ("subject" in payload.data === false && Object.keys(payload.data.custom_fields).length === 2) { //note creation
+    if (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == 'true')
+      getProblemNotes(payload.data, id_num, payload);
+  } else if (Object.keys(payload.data.custom_fields).length === 1) //problem updated
     searchProblemInDb(payload, object);
-  }
 }
 
 let searchProblemInDb = function (payload, object) {

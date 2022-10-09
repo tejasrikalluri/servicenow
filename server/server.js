@@ -32,6 +32,7 @@ exports = {
   }
 };
 let otherProblemsEvents = function (payload, id_num, object) {
+  console.log('other conditions')
   if ("subject" in payload.data === false && Object.keys(payload.data.custom_fields).length === 2) { //note creation
     if (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == 'true')
       getProblemNotes(payload.data, id_num, payload);
@@ -40,14 +41,14 @@ let otherProblemsEvents = function (payload, id_num, object) {
 }
 
 let searchProblemInDb = function (payload, object) {
-  client.db.get(`problem:${payload.data.id.split("-")[1]}`).then(function () {
+  $db.get(`problem:${payload.data.id.split("-")[1]}`).then(function () {
     console.log("PROBLEM ID IS IN DB")
   }, function (error) {
-    if (e.status !== 404) {
-      createTicketInServicenow(object, payload.data.id.split("-")[1], "Problem", payload);
-    } else {
+    if (error.status !== 404) {
       console.log('ERROR AT SEARCH PROBLEM IN DB()')
-      console.error(error)
+      console.error(error);
+    } else {
+      createTicketInServicenow(object, payload.data.id.split("-")[1], "Problem", payload);
     }
   });
 }
@@ -68,7 +69,8 @@ function conditionChecksLogs(id_num, payload) {
   console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true', " <- initiated_from_fresh_service isTrue?")
   console.log(payload.data.custom_fields.initiated_from_service_now == 'true', " <- initiated_from_service_now isTrue?")
   console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true' && "subject" in payload.data, " <-first if condition")
-  console.log("subject" in payload.data === false && (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == true), " <-second if condition")
+  console.log("subject" in payload.data === false && Object.keys(payload.data.custom_fields).length === 2, " <-second if condition")
+  console.log(Object.keys(payload.data.custom_fields).length === 1, " <-third if condition")
 }
 function getProblemNotes(w_data, id, args) {
   console.log(" in getProblemNotes()");
@@ -231,7 +233,7 @@ function updateProblemField(ticket_id, num, sys_id, type) {
 
 
 function linkSnTicketToFs(sys_id, ticket_id, number) {
-  $db.set(ticket_id, { id: sys_id, "number": number }).then(function () {
+  $db.set(`problem:${ticket_id}`, { id: sys_id, "number": number }).then(function () {
     console.log("Service Now Ticket is linked to FS");
   }, function (e) {
     console.log("in linkSnTicketToFs()...");

@@ -36,7 +36,7 @@ let otherProblemsEvents = function (payload, id_num, object) {
   if ("subject" in payload.data === false && Object.keys(payload.data.custom_fields).length === 2) { //note creation
     if (payload.data.custom_fields.initiated_from_fresh_service == 'true' || payload.data.custom_fields.initiated_from_service_now == 'true')
       getProblemNotes(payload.data, id_num, payload);
-  } else if (Object.keys(payload.data.custom_fields).length === 1) //problem updated
+  } else if (Object.keys(payload.data.custom_fields).length === 1 && payload.data.custom_fields.initiated_from_fresh_service) //problem updated
     searchProblemInDb(payload, object);
 }
 
@@ -66,11 +66,13 @@ function conditionChecksLogs(id_num, payload) {
   console.log(payload.data.custom_fields)
   console.log("subject" in payload.data, " <-subject exit")
   console.log("subject" in payload.data === false, " <-not subject exist")
+  console.log(Object.keys(payload.data.custom_fields).length, " <-custom fields obj length")
+  console.log(payload.data.custom_fields.initiated_from_fresh_service, " <-initiated_from_fresh_service value")
   console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true', " <- initiated_from_fresh_service isTrue?")
   console.log(payload.data.custom_fields.initiated_from_service_now == 'true', " <- initiated_from_service_now isTrue?")
   console.log(payload.data.custom_fields.initiated_from_fresh_service == 'true' && "subject" in payload.data, " <-first if condition")
   console.log("subject" in payload.data === false && Object.keys(payload.data.custom_fields).length === 2, " <-second if condition")
-  console.log(Object.keys(payload.data.custom_fields).length === 1, " <-third if condition")
+  console.log(Object.keys(payload.data.custom_fields).length === 1 && payload.data.custom_fields.initiated_from_fresh_service== 'true', " <-third if condition")
 }
 function getProblemNotes(w_data, id, args) {
   console.log(" in getProblemNotes()");

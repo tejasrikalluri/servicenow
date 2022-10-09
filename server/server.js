@@ -43,11 +43,11 @@ let otherProblemsEvents = function (payload, id_num, object) {
 }
 
 let searchProblemInDb = function (payload, object) {
-  client.db.get(`problem:${data.id}`).then(function (data) {
+  client.db.get(`problem:${payload.data.id.split("-")[1]}`).then(function () {
     console.log("PROBLEM ID IS IN DB")
   }, function (error) {
     if (e.status !== 404) {
-      createTicketInServicenow(object, data.id, "Problem", payload);
+      createTicketInServicenow(object, payload.data.id.split("-")[1], "Problem", payload);
     } else {
       console.log('ERROR AT SEARCH PROBLEM IN DB()')
       console.error(error)

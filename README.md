@@ -17,3 +17,5 @@ Congratulations on creating your App Project! Feel free to replace this text wit
         └── test_data
             ├── onTicketCreate.json
             └── onTicketUpdate.json
+
+seperate custom for problems sync in servicenow

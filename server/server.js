@@ -92,7 +92,7 @@ function getProblemNotes(w_data, id, args) {
   });
 }
 function createNoteInSn(text, w_data, args) {
-  let url = "https://alternativestaging.service-now.com/api/now/table/u_freshservice_ticket";
+  let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
   console.log('SERVICE NOW API URL')
   console.log(url)
   const apiKey = base64.encode(`${args.iparams.domain_sn}:${args.iparams.apiKeySn}`);
@@ -119,7 +119,7 @@ function createNoteInSn(text, w_data, args) {
   });
 }
 function createTicketInServicenow(objBody, ticket_id, type, args) {
-  let url = "https://alternativestaging.service-now.com/api/now/table/u_freshservice_ticket";
+  let url = "https://daisygroup.service-now.com/api/now/table/u_freshservice_ticket";
   console.log('SERVICE NOW API URL')
   console.log(url)
   const apiKey = base64.encode(`${args.iparams.domain_sn}:${args.iparams.apiKeySn}`);
